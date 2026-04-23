@@ -1,1268 +1,979 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>A/B Test Builder · Etos & Gall Product</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AB Test Builder</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
   :root {
-    /* Etos & Gall palette – inspired by the logo */
-    --coral: #ff6b4a;           /* logo coral/orange */
-    --coral-soft: #ff8a6a;
-    --coral-deep: #e04f30;
-    --rose: #ffb3c1;            /* logo pink */
-    --ink: #0a0b10;             /* primary bg */
-    --ink-2: #101117;
-    --ink-3: #181a22;
-    --ink-4: #22252f;
-    --line: #24272f;
-    --line-soft: #1a1c23;
-    --text: #e8e6e1;
-    --text-soft: #8a8b8f;
-    --text-mute: #4d4f57;
-    --text-faint: #2f313a;
-    --mint: #7ae0b8;            /* accent */
-    --amber: #f5b84c;
-    --lilac: #b08cff;
-
-    --radius: 10px;
-    --radius-sm: 6px;
-    --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-    --font-body: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #f0f1f4;
+    --surface3: #e8eaed;
+    --border: #dde0e6;
+    --border-bright: #c5c9d3;
+    --text: #1a1d23;
+    --text-muted: #7c8494;
+    --text-dim: #4b5263;
+    --accent: #ea6c00;
+    --accent-dim: rgba(234,108,0,0.08);
+    --accent-border: rgba(234,108,0,0.28);
+    --green: #16a34a;
+    --blue: #2563eb;
+    --purple: #7c3aed;
+    --red: #dc2626;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --wf-base: #e8eaed;
+    --wf-block: #d4d7de;
+    --wf-block2: #b8bcc7;
+    --wf-accent: rgba(234,108,0,0.16);
+    --radius: 6px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
   }
 
-  * { box-sizing: border-box; }
-
-  html, body, #root {
-    height: 100%;
-    margin: 0;
-    padding: 0;
+  [data-theme="dark"] {
+    --bg: #0e0f11;
+    --surface: #16181c;
+    --surface2: #1e2126;
+    --surface3: #252930;
+    --border: #2e3138;
+    --border-bright: #3d4250;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --accent: #f97316;
+    --accent-dim: rgba(249,115,22,0.12);
+    --accent-border: rgba(249,115,22,0.35);
+    --green: #22c55e;
+    --blue: #60a5fa;
+    --purple: #a78bfa;
+    --red: #f87171;
+    --shadow: 0 1px 4px rgba(0,0,0,0.4);
+    --wf-base: #1e2126;
+    --wf-block: #252930;
+    --wf-block2: #2e3138;
+    --wf-accent: rgba(249,115,22,0.2);
   }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: var(--font-body);
-    background: var(--ink);
+    font-family: var(--sans);
+    background: var(--bg);
     color: var(--text);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    height: 100vh;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.18s, color 0.18s;
   }
 
-  /* subtle film-grain background */
-  body::before {
-    content: "";
-    position: fixed; inset: 0;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.025;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 20px;
+    height: 48px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    box-shadow: var(--shadow);
   }
 
-  button { font-family: inherit; }
-  textarea, input { font-family: inherit; }
+  .topbar-logo {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .topbar-logo::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 7px var(--accent);
+  }
 
-  /* Scrollbars */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2a2d36; border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #393c47; }
+  .topbar-sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
 
-  /* Utility classes used by the app */
-  .mono { font-family: var(--font-mono); }
-  .serif { font-family: var(--font-display); }
+  .exp-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
 
-  .label-eyebrow {
+  .exp-id {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .exp-title-input {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: none;
+    border: none;
+    outline: none;
+    padding: 3px 6px;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 0;
+    transition: background 0.15s;
+  }
+  .exp-title-input::placeholder { color: var(--text-muted); font-weight: 400; }
+  .exp-title-input:hover { background: var(--surface2); }
+  .exp-title-input:focus { background: var(--surface3); }
+
+  .status-pill {
+    font-family: var(--mono);
     font-size: 9px;
     font-weight: 600;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--text-mute);
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent-border);
+    color: var(--accent);
+    flex-shrink: 0;
   }
 
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+  /* Theme toggle as segmented control */
+  .theme-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .theme-opt {
+    font-family: var(--mono);
     font-size: 10px;
     font-weight: 500;
-    padding: 3px 7px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--text-soft);
-    background: var(--ink-2);
-  }
-
-  /* buttons */
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    gap: 6px;
-    padding: 8px 13px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    font-size: 12px;
-    font-weight: 500;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 10px;
     cursor: pointer;
-    transition: all 0.15s ease;
-    background: var(--ink-3);
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .theme-opt:hover { color: var(--text); }
+  .theme-opt.active {
+    background: var(--surface);
     color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
-  .btn:hover:not(:disabled) { background: #252833; border-color: var(--line); }
-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-  .btn-primary {
-    background: var(--coral);
-    color: #1a0a05;
-    font-weight: 600;
-  }
-  .btn-primary:hover:not(:disabled) {
-    background: var(--coral-soft);
-    border-color: transparent;
-  }
-  .btn-primary:disabled { background: #1e1f26; color: var(--text-faint); }
+  /* ── LAYOUT ── */
+  .main { display: grid; grid-template-columns: 420px 1fr; flex: 1; overflow: hidden; }
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-soft);
-    border: 1px solid var(--line);
+  /* ── LEFT ── */
+  .left-panel {
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--surface);
   }
-  .btn-ghost:hover { background: var(--ink-3); color: var(--text); }
 
-  /* animations */
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
+  .var-tabs {
+    display: flex; align-items: stretch;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    padding: 0 12px; gap: 2px;
+    flex-shrink: 0; height: 40px;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .fade-in { animation: fadeInUp 0.25s ease forwards; }
-  .loading-dot { animation: pulse 1.2s ease-in-out infinite; }
 
-  /* focus */
-  textarea:focus, input:focus {
-    outline: none;
-    border-color: var(--coral) !important;
-    box-shadow: 0 0 0 3px rgba(255, 107, 74, 0.12);
+  .var-tab {
+    font-family: var(--mono);
+    font-size: 11px; font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0 13px;
+    border: none; background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
   }
+  .var-tab:hover { color: var(--text-dim); }
+  .var-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .var-tab .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.55; }
+  .var-tab.var1 .tab-dot { background: var(--blue); }
+  .var-tab.var1.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .var-tab.var2 .tab-dot { background: var(--purple); }
+  .var-tab.var2.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  .add-var-btn {
+    margin-left: auto; align-self: center;
+    font-size: 16px; line-height: 1;
+    color: var(--text-muted);
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    width: 24px; height: 24px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .add-var-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .add-var-btn.hidden { display: none; }
+
+  .tab-pane { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .tab-pane.active { display: flex; }
+
+  .control-notice {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px;
+    color: var(--text-muted); padding: 40px; text-align: center;
+  }
+  .control-notice .icon { font-size: 30px; opacity: 0.3; }
+  .control-notice p { font-size: 12px; line-height: 1.65; max-width: 260px; }
+
+  .chat-area {
+    flex: 1; overflow-y: auto;
+    padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+
+  .chat-welcome { text-align: center; padding: 30px 20px; color: var(--text-muted); }
+  .chat-welcome .icon { font-size: 24px; margin-bottom: 10px; }
+  .chat-welcome h3 { font-size: 13px; font-weight: 500; color: var(--text-dim); margin-bottom: 5px; }
+  .chat-welcome p { font-size: 12px; line-height: 1.6; }
+
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    font-family: var(--mono);
+  }
+  .msg.user .msg-avatar { background: var(--surface3); color: var(--text-dim); border: 1px solid var(--border-bright); }
+  .msg.ai .msg-avatar { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+
+  .msg-bubble {
+    max-width: 88%; padding: 10px 13px;
+    border-radius: var(--radius);
+    font-size: 12.5px; line-height: 1.65;
+  }
+  .msg.user .msg-bubble { background: var(--surface3); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius) var(--radius) 2px var(--radius); }
+  .msg.ai .msg-bubble { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius) var(--radius) var(--radius) 2px; }
+
+  .quick-prompts { padding: 10px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .quick-prompts-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+  .quick-prompts-list { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .qp-btn {
+    font-family: var(--sans); font-size: 11px;
+    color: var(--text-dim); background: var(--surface3);
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 4px 10px; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  }
+  .qp-btn:hover { border-color: var(--accent-border); color: var(--accent); background: var(--accent-dim); }
+
+  .chat-input-area { padding: 12px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+
+  .chat-textarea {
+    flex: 1; background: var(--surface3); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text);
+    font-family: var(--sans); font-size: 12.5px; line-height: 1.5;
+    padding: 9px 12px; resize: none;
+    min-height: 38px; max-height: 100px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .chat-textarea:focus { border-color: var(--border-bright); }
+  .chat-textarea::placeholder { color: var(--text-muted); }
+
+  .send-btn {
+    background: var(--accent); border: none; border-radius: var(--radius);
+    color: #fff; width: 36px; height: 36px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: opacity 0.15s; font-size: 15px;
+  }
+  .send-btn:hover { opacity: 0.82; }
+
+  /* ── RIGHT ── */
+  .right-panel { display: flex; flex-direction: column; overflow: hidden; }
+  .right-top { display: grid; grid-template-columns: 1fr 1fr; flex: 1; overflow: hidden; min-height: 0; }
+
+  /* Preview pane */
+  .preview-pane { border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+
+  .pane-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 12px; height: 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-shrink: 0;
+  }
+  .pane-label { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); flex-shrink: 0; }
+
+  .url-input-wrap {
+    flex: 1; display: flex; align-items: center; gap: 5px;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 0 8px; height: 26px;
+    transition: border-color 0.15s; min-width: 0;
+  }
+  .url-input-wrap:focus-within { border-color: var(--border-bright); }
+  .url-prefix { font-size: 11px; flex-shrink: 0; }
+  .url-input {
+    flex: 1; background: none; border: none; outline: none;
+    font-family: var(--mono); font-size: 10px; color: var(--text); min-width: 0;
+  }
+  .url-input::placeholder { color: var(--text-muted); }
+  .url-go-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 12px; padding: 0; display: flex; align-items: center; transition: color 0.15s; flex-shrink: 0; }
+  .url-go-btn:hover { color: var(--accent); }
+
+  .device-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .device-btn { font-size: 10px; padding: 3px 8px; border: 1px solid var(--border); border-radius: 4px; background: none; color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
+  .device-btn.active, .device-btn:hover { border-color: var(--border-bright); color: var(--text); background: var(--surface3); }
+
+  /* Wireframe */
+  .wireframe {
+    flex: 1; overflow-y: auto; padding: 14px;
+    background: var(--bg);
+    display: flex; align-items: flex-start; justify-content: center;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+
+  .wf-browser {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    width: 100%; max-width: 100%;
+    transition: max-width 0.25s ease, margin 0.25s ease;
+  }
+  .wf-browser.mobile-view { max-width: 300px; margin: 0 auto; }
+
+  .wf-browser-bar {
+    height: 30px; background: var(--surface2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 10px; gap: 5px;
+  }
+  .wf-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .wf-dot:nth-child(1) { background: var(--red); opacity: 0.5; }
+  .wf-dot:nth-child(2) { background: var(--accent); opacity: 0.5; }
+  .wf-dot:nth-child(3) { background: var(--green); opacity: 0.5; }
+  .wf-url-bar {
+    margin-left: 8px; flex: 1; height: 16px;
+    background: var(--surface3); border-radius: 3px; border: 1px solid var(--border);
+    font-family: var(--mono); font-size: 8px; color: var(--text-muted);
+    display: flex; align-items: center; padding: 0 7px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  .wf-body { padding: 10px; display: flex; flex-direction: column; gap: 7px; }
+
+  /* Shared skeleton pieces */
+  .wf-block { background: var(--wf-block); border-radius: 2px; }
+  .wf-block2 { background: var(--wf-block2); border-radius: 2px; }
+
+  /* Desktop nav */
+  .wf-nav { height: 34px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; gap: 7px; }
+  .wf-nav-logo { width: 55px; height: 11px; background: var(--wf-block2); border-radius: 2px; }
+  .wf-nav-links { display: flex; gap: 5px; margin-left: 14px; }
+  .wf-nav-link { width: 32px; height: 7px; background: var(--wf-block); border-radius: 2px; }
+  .wf-nav-search { margin-left: auto; width: 75px; height: 18px; background: var(--wf-block); border: 1px solid var(--border); border-radius: 3px; }
+
+  /* Hero */
+  .wf-hero { height: 110px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+  .wf-hero-title { width: 130px; height: 14px; background: var(--wf-block2); border-radius: 3px; }
+  .wf-hero-sub { width: 90px; height: 9px; background: var(--wf-block); border-radius: 3px; }
+  .wf-hero-cta { width: 65px; height: 20px; background: var(--wf-accent); border-radius: 3px; border: 1px solid var(--accent-border); }
+
+  /* Mobile hero */
+  .wf-mobile-hero { height: 130px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+
+  /* Grid */
+  .wf-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+  .wf-grid.cols2 { grid-template-columns: repeat(2,1fr); }
+
+  .wf-card { background: var(--wf-base); border: 1px solid var(--border); border-radius: 4px; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .wf-img { height: 52px; background: var(--wf-block); border-radius: 3px; border: 1px solid var(--border); }
+  .wf-img.tall { height: 75px; }
+  .wf-line { height: 7px; background: var(--wf-block2); border-radius: 2px; }
+  .wf-line.s { width: 66%; }
+  .wf-line.price { width: 38%; height: 9px; background: var(--wf-accent); border: 1px solid var(--accent-border); }
+  .wf-btn-sm { height: 18px; background: var(--wf-block); border: 1px solid var(--border); border-radius: 3px; }
+
+  /* Mobile nav */
+  .wf-mobile-nav { height: 44px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; }
+  .wf-hamburger { width: 18px; display: flex; flex-direction: column; gap: 3px; }
+  .wf-hamburger span { display: block; height: 2px; background: var(--wf-block2); border-radius: 1px; }
+  .wf-mobile-logo { width: 50px; height: 10px; background: var(--wf-block2); border-radius: 2px; }
+  .wf-mobile-cart { width: 20px; height: 20px; background: var(--wf-block); border-radius: 50%; }
+
+  .wf-search-bar { height: 28px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; gap: 6px; }
+  .wf-search-icon { width: 11px; height: 11px; background: var(--wf-block); border-radius: 50%; flex-shrink: 0; }
+  .wf-search-text { flex: 1; height: 7px; background: var(--wf-block); border-radius: 2px; }
+
+  .wf-footer { height: 34px; background: var(--wf-base); border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .wf-footer-link { width: 42px; height: 6px; background: var(--wf-block); border-radius: 2px; }
+
+  /* ── CODE PANE ── */
+  .code-pane { display: flex; flex-direction: column; overflow: hidden; }
+
+  .code-sections {
+    flex: 1; overflow-y: auto; padding: 12px;
+    display: flex; flex-direction: column; gap: 12px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+
+  .code-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+
+  .code-block-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .code-block-type { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; }
+  .type-css { background: rgba(37,99,235,0.1); color: var(--blue); border: 1px solid rgba(37,99,235,0.2); }
+  .type-js  { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+
+  .code-block-copy {
+    margin-left: auto; font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); background: var(--surface3);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 3px 8px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .code-block-copy:hover { color: var(--text); border-color: var(--border-bright); }
+  .code-block-copy.copied { color: var(--green); border-color: rgba(22,163,74,0.3); }
+
+  .code-config {
+    padding: 9px 12px; display: flex; gap: 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); flex-wrap: wrap;
+  }
+  .config-field { display: flex; flex-direction: column; gap: 4px; }
+  .config-field.wide { flex: 0 0 auto; }
+  .config-field.grow { flex: 1; min-width: 130px; }
+  .config-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+
+  .config-select, .config-input {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--text); background: var(--surface3);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 8px; outline: none;
+    transition: border-color 0.15s; height: 26px;
+  }
+  .config-select:focus, .config-input:focus { border-color: var(--border-bright); }
+  .config-select { cursor: pointer; }
+  .config-select option { background: var(--surface2); color: var(--text); }
+  .config-input::placeholder { color: var(--text-muted); }
+
+  .code-editor {
+    font-family: var(--mono); font-size: 11px; line-height: 1.75;
+    color: var(--text); background: var(--bg);
+    border: none; width: 100%; resize: none; outline: none;
+    padding: 11px 12px; min-height: 90px; max-height: 165px;
+    transition: background 0.18s, color 0.18s;
+  }
+
+  /* Triggers */
+  .trigger-section { border-top: 1px solid var(--border); padding: 10px 12px; flex-shrink: 0; background: var(--surface); }
+  .trigger-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; display: flex; align-items: center; gap: 6px; }
+  .trigger-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .trigger-rows { display: flex; flex-direction: column; gap: 5px; }
+  .trigger-row { display: flex; gap: 5px; align-items: center; }
+
+  .trigger-select {
+    font-family: var(--mono); font-size: 10px; color: var(--text);
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 7px; height: 26px;
+    outline: none; cursor: pointer; flex-shrink: 0; width: 152px;
+  }
+  .trigger-select option { background: var(--surface2); color: var(--text); }
+
+  .trigger-value {
+    flex: 1; font-family: var(--mono); font-size: 10px; color: var(--text);
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 8px; height: 26px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .trigger-value:focus { border-color: var(--border-bright); }
+  .trigger-value::placeholder { color: var(--text-muted); }
+
+  .trigger-op {
+    font-family: var(--mono); font-size: 9px; color: var(--text-muted);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 7px; height: 26px;
+    cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .trigger-op:hover { color: var(--red); border-color: rgba(220,38,38,0.3); }
+
+  .add-trigger-btn {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--text-muted); background: none;
+    border: 1px dashed var(--border); border-radius: 4px;
+    padding: 4px 10px; cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+    width: fit-content; margin-top: 5px;
+  }
+  .add-trigger-btn:hover { color: var(--accent); border-color: var(--accent-border); }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
 <body>
 
-<div id="root"></div>
+<div class="topbar">
+  <div class="topbar-logo">AB Test Builder</div>
+  <div class="topbar-sep"></div>
+  <div class="exp-title-wrap">
+    <span class="exp-id">eg_2026_q2_001 ·</span>
+    <input class="exp-title-input" id="expTitle" type="text" placeholder="Name your experiment…" maxlength="80">
+  </div>
+  <div class="status-pill">DRAFT</div>
+  <div class="topbar-right">
+    <div class="theme-toggle">
+      <button class="theme-opt active" id="themeLight" onclick="setTheme('light')">☀ Light</button>
+      <button class="theme-opt" id="themeDark" onclick="setTheme('dark')">◗ Dark</button>
+    </div>
+  </div>
+</div>
 
-<script type="text/babel" data-presets="react">
-/* ==========================================================================
-   A/B Test Builder — Standalone HTML version
-   Etos & Gall Product · SiteSpect client-side variation generator
-   ========================================================================== */
+<div class="main">
 
-const { useState, useRef, useEffect } = React;
+  <!-- LEFT -->
+  <div class="left-panel">
+    <div class="var-tabs">
+      <button class="var-tab control" data-tab="control" onclick="switchTab('control')">
+        <span class="tab-dot"></span> Control
+      </button>
+      <button class="var-tab var1 active" data-tab="var1" onclick="switchTab('var1')">
+        <span class="tab-dot"></span> Variation 1
+      </button>
+      <button class="add-var-btn" id="addVarBtn" title="Add Variation 2" onclick="addVariation()">+</button>
+    </div>
 
-/* ─── Logo (base64 PNG, transparent) ─── */
-const LOGO_SRC = "data:image/png;base64,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";
+    <!-- Control -->
+    <div class="tab-pane" id="pane-control">
+      <div class="control-notice">
+        <div class="icon">⊘</div>
+        <p>Control is the original experience. No code is applied here — it serves as the unmodified baseline for comparison.</p>
+      </div>
+    </div>
 
-/* ─── System prompt ─── */
-const SYSTEM_PROMPT = `You are an expert frontend developer and A/B testing specialist with deep knowledge of SiteSpect's client-side variation system.
+    <!-- Var 1 -->
+    <div class="tab-pane active" id="pane-var1">
+      <div class="chat-area" id="chat-var1">
+        <div class="chat-welcome">
+          <div class="icon">✦</div>
+          <h3>Variation 1 — AI Copilot</h3>
+          <p>Describe the change you want to make and I'll suggest the SiteSpect trigger, CSS, and JS.</p>
+        </div>
+      </div>
+      <div class="quick-prompts">
+        <div class="quick-prompts-label">Quick prompts</div>
+        <div class="quick-prompts-list">
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">Hide element</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">Change button text</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">Reorder elements</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">Inject banner</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">Scroll behavior</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var1')">CSS only change</button>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" id="input-var1" placeholder="Describe the change for Variation 1…" rows="1"
+            onkeydown="handleKey(event,'var1')" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendMessage('var1')">↑</button>
+        </div>
+      </div>
+    </div>
 
-The user will describe design changes they want to test on a webpage. Your job is to:
-1. Analyze the request and the provided HTML source
-2. Generate precise CSS and JavaScript changes as separate "factors" for SiteSpect
-3. For each change, suggest the most appropriate SiteSpect trigger
+    <!-- Var 2 -->
+    <div class="tab-pane" id="pane-var2">
+      <div class="chat-area" id="chat-var2">
+        <div class="chat-welcome">
+          <div class="icon">✦</div>
+          <h3>Variation 2 — AI Copilot</h3>
+          <p>Describe the change you want to make and I'll suggest the SiteSpect trigger, CSS, and JS.</p>
+        </div>
+      </div>
+      <div class="quick-prompts">
+        <div class="quick-prompts-label">Quick prompts</div>
+        <div class="quick-prompts-list">
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">Hide element</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">Change button text</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">Reorder elements</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">Inject banner</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">Scroll behavior</button>
+          <button class="qp-btn" onclick="fillPrompt(this,'var2')">CSS only change</button>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" id="input-var2" placeholder="Describe the change for Variation 2…" rows="1"
+            onkeydown="handleKey(event,'var2')" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" onclick="sendMessage('var2')">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-Respond ONLY with a valid JSON object in this exact structure:
-{
-  "summary": "Brief human-readable summary of what changes will be made",
-  "factors": [
-    {
-      "id": "unique_snake_case_id",
-      "name": "Human readable factor name",
-      "type": "css" | "html" | "attribute" | "js",
-      "selector": "CSS selector string",
-      "changes": [
-        {
-          "property": "CSS property or attribute name",
-          "value": "new value",
-          "changeType": "set_css" | "insert_html" | "set_attribute" | "custom_js"
-        }
-      ],
-      "trigger": {
-        "type": "path" | "query" | "hash" | "custom_js",
-        "value": "trigger value or JS code",
-        "rationale": "Why this trigger was chosen"
-      },
-      "sitespect_instructions": "Step-by-step instructions for entering this in SiteSpect UI"
+  <!-- RIGHT -->
+  <div class="right-panel">
+    <div class="right-top">
+
+      <!-- Preview -->
+      <div class="preview-pane">
+        <div class="pane-header">
+          <div class="pane-label">Preview</div>
+          <div class="url-input-wrap">
+            <span class="url-prefix">🔗</span>
+            <input class="url-input" id="previewUrl" type="text" placeholder="https://www.gall.nl/" oninput="syncUrlBar()">
+            <button class="url-go-btn" onclick="syncUrlBar()" title="Update">↵</button>
+          </div>
+          <div class="device-btns">
+            <button class="device-btn active" onclick="setDevice('desktop',this)">Desktop</button>
+            <button class="device-btn" onclick="setDevice('mobile',this)">Mobile</button>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wf-browser" id="wf-browser">
+            <div class="wf-browser-bar">
+              <div class="wf-dot"></div><div class="wf-dot"></div><div class="wf-dot"></div>
+              <div class="wf-url-bar" id="wf-url-bar">https://www.gall.nl/</div>
+            </div>
+
+            <!-- Desktop -->
+            <div class="wf-body" id="wf-desktop">
+              <div class="wf-nav">
+                <div class="wf-nav-logo"></div>
+                <div class="wf-nav-links">
+                  <div class="wf-nav-link"></div><div class="wf-nav-link"></div>
+                  <div class="wf-nav-link"></div><div class="wf-nav-link"></div><div class="wf-nav-link"></div>
+                </div>
+                <div class="wf-nav-search"></div>
+              </div>
+              <div class="wf-hero">
+                <div class="wf-hero-title"></div>
+                <div class="wf-hero-sub"></div>
+                <div class="wf-hero-cta"></div>
+              </div>
+              <div class="wf-grid">
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+              </div>
+              <div class="wf-footer">
+                <div class="wf-footer-link"></div><div class="wf-footer-link"></div>
+                <div class="wf-footer-link"></div><div class="wf-footer-link"></div>
+              </div>
+            </div>
+
+            <!-- Mobile (hidden) -->
+            <div class="wf-body" id="wf-mobile" style="display:none;">
+              <div class="wf-mobile-nav">
+                <div class="wf-hamburger"><span></span><span></span><span></span></div>
+                <div class="wf-mobile-logo"></div>
+                <div class="wf-mobile-cart"></div>
+              </div>
+              <div class="wf-search-bar">
+                <div class="wf-search-icon"></div>
+                <div class="wf-search-text"></div>
+              </div>
+              <div class="wf-mobile-hero">
+                <div class="wf-hero-title"></div>
+                <div class="wf-hero-sub"></div>
+                <div class="wf-hero-cta"></div>
+              </div>
+              <div class="wf-grid cols2">
+                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+              </div>
+              <div class="wf-footer">
+                <div class="wf-footer-link"></div><div class="wf-footer-link"></div><div class="wf-footer-link"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code -->
+      <div class="code-pane">
+        <div class="pane-header">
+          <div class="pane-label">Code Output</div>
+        </div>
+        <div class="code-sections">
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-type type-css">CSS</span>
+              <button class="code-block-copy" onclick="copyBlock(this,'css-editor')">⎘ Copy</button>
+            </div>
+            <div class="code-config">
+              <div class="config-field wide">
+                <div class="config-label">Variation Type</div>
+                <select class="config-select" id="css-type" onchange="updateCssConfig()">
+                  <option value="standard">Standard</option>
+                  <option value="client">Client side</option>
+                </select>
+              </div>
+              <div class="config-field grow" id="css-find-wrap">
+                <div class="config-label">Find (page source)</div>
+                <input class="config-input" id="css-find" type="text" placeholder="&lt;/head&gt;">
+              </div>
+              <div class="config-field grow" id="css-sel-wrap" style="display:none;">
+                <div class="config-label">CSS Selector</div>
+                <input class="config-input" id="css-selector" type="text" placeholder=".js-header">
+              </div>
+            </div>
+            <textarea class="code-editor" id="css-editor" spellcheck="false" placeholder="/* CSS changes will appear here */"></textarea>
+          </div>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-type type-js">JS</span>
+              <button class="code-block-copy" onclick="copyBlock(this,'js-editor')">⎘ Copy</button>
+            </div>
+            <div class="code-config">
+              <div class="config-field wide">
+                <div class="config-label">Variation Type</div>
+                <select class="config-select" id="js-type" onchange="updateJsConfig()">
+                  <option value="client">Client side</option>
+                  <option value="standard">Standard</option>
+                </select>
+              </div>
+              <div class="config-field grow" id="js-sel-wrap">
+                <div class="config-label">CSS Selector</div>
+                <input class="config-input" id="js-selector" type="text" placeholder="[data-testid=&quot;hero-cta&quot;]">
+              </div>
+              <div class="config-field grow" id="js-find-wrap" style="display:none;">
+                <div class="config-label">Find (page source)</div>
+                <input class="config-input" id="js-find" type="text" placeholder="&lt;/head&gt;">
+              </div>
+            </div>
+            <textarea class="code-editor" id="js-editor" spellcheck="false" placeholder="// JS changes will appear here"></textarea>
+          </div>
+
+        </div>
+
+        <div class="trigger-section">
+          <div class="trigger-label">Page Source Triggers</div>
+          <div class="trigger-rows" id="trigger-rows">
+            <div class="trigger-row">
+              <select class="trigger-select">
+                <option>Page source contains</option>
+                <option>Page source does not contain</option>
+                <option>URL matches</option>
+                <option>Cookie contains</option>
+                <option>Custom JS</option>
+              </select>
+              <input class="trigger-value" type="text" placeholder='"pageType":"home"'>
+              <button class="trigger-op" onclick="removeTriggerRow(this)">✕</button>
+            </div>
+          </div>
+          <button class="add-trigger-btn" onclick="addTriggerRow()">+ Add trigger</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Theme ──
+  function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('themeLight').classList.toggle('active', t === 'light');
+    document.getElementById('themeDark').classList.toggle('active', t === 'dark');
+  }
+
+  // ── Device ──
+  function setDevice(mode, btn) {
+    document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const browser = document.getElementById('wf-browser');
+    const desktop = document.getElementById('wf-desktop');
+    const mobile  = document.getElementById('wf-mobile');
+    if (mode === 'mobile') {
+      browser.classList.add('mobile-view');
+      desktop.style.display = 'none';
+      mobile.style.display  = 'flex';
+      mobile.style.flexDirection = 'column';
+    } else {
+      browser.classList.remove('mobile-view');
+      desktop.style.display = 'flex';
+      desktop.style.flexDirection = 'column';
+      mobile.style.display  = 'none';
     }
-  ]
-}
+  }
 
-Rules:
-- Split CSS changes and JS/HTML changes into SEPARATE factors
-- Each factor = one Variation in SiteSpect with a specific CSS selector
-- Prefer path triggers for page-level changes, query triggers for parameter-based pages
-- Use custom_js triggers for SPA or dynamic content
-- Be specific with CSS selectors based on the actual HTML provided
-- For CSS changes: use set_css type, list each property/value pair
-- For HTML changes: use insert_html type with full HTML string
-- For attribute changes: use set_attribute type
-- Do not include any text outside the JSON object`;
+  // ── URL bar ──
+  function syncUrlBar() {
+    const v = document.getElementById('previewUrl').value || 'https://';
+    document.getElementById('wf-url-bar').textContent = v;
+  }
 
-/* ─── Utilities ─── */
-const VAR_COLORS = ["#ff6b4a", "#7ae0b8", "#f5b84c", "#b08cff", "#5ac8ea", "#ff8fab"];
+  // ── Tabs ──
+  function switchTab(id) {
+    document.querySelectorAll('.var-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[data-tab="${id}"]`)?.classList.add('active');
+    document.getElementById(`pane-${id}`)?.classList.add('active');
+  }
 
-function uid() { return Math.random().toString(36).slice(2, 8); }
+  let var2Added = false;
+  function addVariation() {
+    if (var2Added) return;
+    var2Added = true;
+    const btn = document.getElementById('addVarBtn');
+    btn.classList.add('hidden');
+    const tabsEl = document.querySelector('.var-tabs');
+    const tab = document.createElement('button');
+    tab.className = 'var-tab var2';
+    tab.dataset.tab = 'var2';
+    tab.innerHTML = '<span class="tab-dot"></span> Variation 2';
+    tab.onclick = () => switchTab('var2');
+    tabsEl.insertBefore(tab, btn);
+    switchTab('var2');
+  }
 
-function applyFactorsToDoc(doc, factors) {
-  factors.forEach((factor) => {
-    try {
-      const els = doc.querySelectorAll(factor.selector);
-      els.forEach((el) => {
-        factor.changes?.forEach((change) => {
-          if (change.changeType === "set_css") el.style[change.property] = change.value;
-          else if (change.changeType === "insert_html") el.innerHTML = change.value;
-          else if (change.changeType === "set_attribute") el.setAttribute(change.property, change.value);
-          else if (change.changeType === "custom_js") {
-            try { (new Function("el", change.value))(el); } catch (e) {}
-          }
-        });
-      });
-    } catch (e) {}
-  });
-}
+  // ── Sample responses ──
+  const RESPONSES = {
+    'hide element':       { css:`.target-element {\n  display: none !important;\n}`, js:`if (this.done) return;\nthis.done = true;\n\nconst el = document.querySelector('.target-element');\nif (el) el.style.display = 'none';\n}, true);`, jsType:'client', cssType:'standard', trigger:'"pageType":"home"', reply:'Done. CSS Standard hides via display:none injected before </head>. JS is a client-side fallback. Update the selector to match your target element.' },
+    'change button text': { css:`/* No CSS needed for text-only change */`, js:`if (this.done) return;\nthis.done = true;\n\nconst btn = document.querySelector('[data-testid="add-to-cart"]');\nif (btn) btn.textContent = 'Add to Bag';\n}, true);`, jsType:'client', cssType:'standard', trigger:'"pageType":"product detail"', reply:`Done. JS Client-side targets [data-testid="add-to-cart"] — a stable data attribute. Update the text and selector to match your target.` },
+    'inject banner':      { css:`.ss-promo-banner {\n  background: #f97316;\n  color: #fff;\n  text-align: center;\n  padding: 10px 16px;\n  font-size: 14px;\n  font-weight: 600;\n}`, js:`if (this.done) return;\nthis.done = true;\n\nconst banner = document.createElement('div');\nbanner.className = 'ss-promo-banner';\nbanner.textContent = 'Free delivery on orders over \u20ac50';\n\nconst body = document.querySelector('body');\nif (body) body.insertBefore(banner, body.firstChild);\n}, true);`, jsType:'client', cssType:'standard', trigger:'"pageType":"home"', reply:'Done. JS injects a banner at the top of body, CSS styles it via .ss-promo-banner. Adjust the text, colours, and insertion point.' },
+    'reorder elements':   { css:`/* No CSS needed */`, js:`if (this.done) return;\nthis.done = true;\n\nconst source = document.querySelector('.trust-badges');\nconst target = document.querySelector('[data-testid="add-to-cart"]');\n\nif (source && target) {\n  target.parentNode.insertBefore(source, target);\n}\n}, true);`, jsType:'client', cssType:'standard', trigger:'"pageType":"product detail"', reply:'Done. JS moves .trust-badges before the add-to-cart button. Update both selectors to match your actual elements.' },
+    'scroll behavior':    { css:`.c-header {\n  position: sticky;\n  top: 0;\n  transition: transform 0.3s ease;\n  z-index: 100;\n}\n\n.c-header.ss-hidden {\n  transform: translateY(-100%);\n}`, js:`if (this.done) return;\nthis.done = true;\n\nlet last = window.scrollY;\nconst header = document.querySelector('.c-header');\n\nwindow.addEventListener('scroll', () => {\n  const curr = window.scrollY;\n  const diff = curr - last;\n  if (diff > 5) header?.classList.add('ss-hidden');\n  else if (diff < -5) header?.classList.remove('ss-hidden');\n  last = curr;\n}, { passive: true });\n}, true);`, jsType:'client', cssType:'standard', trigger:'"pageType":"home"', reply:"Done. CSS handles the slide animation, JS watches scroll direction with a 5px threshold to avoid jitter. Verify .c-header matches your site's header." },
+    'css only change':    { css:`.ss-var .target {\n  color: #f97316;\n  font-weight: 600;\n}`, js:`/* No JS needed for pure CSS variation */`, jsType:'standard', cssType:'standard', trigger:'"pageType":"home"', reply:'Done. Pure CSS Standard variation injected before </head>. No JS needed. Scope your selectors tightly to avoid side effects.' }
+  };
 
-function generateExport(variation, pagePath = "/") {
-  const jsSnippet = `// ============================================================
-// SiteSpect Client-Side Variation Export
-// Variation: ${variation.name}
-// Generated: ${new Date().toISOString()}
-// Trigger Path: ${pagePath}
-// ============================================================
+  // ── Chat ──
+  function sendMessage(varId) {
+    const input = document.getElementById(`input-${varId}`);
+    const text = input.value.trim();
+    if (!text) return;
+    appendMsg(varId, 'user', text);
+    input.value = '';
+    input.style.height = '';
+    const titleEl = document.getElementById('expTitle');
+    if (!titleEl.value) titleEl.value = text.slice(0, 65);
+    setTimeout(() => {
+      const key = Object.keys(RESPONSES).find(k => text.toLowerCase().includes(k));
+      const resp = RESPONSES[key] || {
+        css: `/* CSS for: ${text} */\n.ss-variation {\n  /* add styles */\n}`,
+        js: `if (this.done) return;\nthis.done = true;\n\n// Variation: ${text}\nconst el = document.querySelector('.target');\nif (el) {\n  // apply change\n}\n}, true);`,
+        jsType:'client', cssType:'standard', trigger:'"pageType":"home"',
+        reply: `Got it. I've scaffolded a variation for "${text}". Update the selector and logic to target your specific element.`
+      };
+      appendMsg(varId, 'ai', resp.reply);
+      applyToCode(resp);
+    }, 500);
+  }
 
-(function() {
-  'use strict';
+  function appendMsg(varId, role, text) {
+    const chat = document.getElementById(`chat-${varId}`);
+    chat.querySelector('.chat-welcome')?.remove();
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = role === 'user' ? 'U' : 'SS';
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = text;
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
 
-  var factors = ${JSON.stringify(
-    variation.factors.map((f) => ({ id: f.id, name: f.name, selector: f.selector, changes: f.changes })),
-    null, 2
-  )};
+  function applyToCode(resp) {
+    document.getElementById('css-editor').value = resp.css || '';
+    document.getElementById('js-editor').value  = resp.js  || '';
+    document.getElementById('css-type').value = resp.cssType;
+    document.getElementById('js-type').value  = resp.jsType;
+    updateCssConfig(); updateJsConfig();
+    const t = document.querySelector('.trigger-value');
+    if (t) t.value = resp.trigger;
+  }
 
-  function applyFactor(factor) {
-    var els = document.querySelectorAll(factor.selector);
-    if (!els.length) return;
-    els.forEach(function(el) {
-      factor.changes.forEach(function(change) {
-        switch (change.changeType) {
-          case 'set_css': el.style[change.property] = change.value; break;
-          case 'insert_html': el.innerHTML = change.value; break;
-          case 'set_attribute': el.setAttribute(change.property, change.value); break;
-          case 'custom_js': try { (new Function('el', change.value))(el); } catch(e) {} break;
-        }
-      });
+  function fillPrompt(btn, varId) {
+    const input = document.getElementById(`input-${varId}`);
+    input.value = btn.textContent;
+    input.focus();
+  }
+
+  function updateCssConfig() {
+    const isClient = document.getElementById('css-type').value === 'client';
+    document.getElementById('css-find-wrap').style.display = isClient ? 'none' : 'flex';
+    document.getElementById('css-sel-wrap').style.display  = isClient ? 'flex' : 'none';
+  }
+
+  function updateJsConfig() {
+    const isClient = document.getElementById('js-type').value === 'client';
+    document.getElementById('js-sel-wrap').style.display  = isClient ? 'flex' : 'none';
+    document.getElementById('js-find-wrap').style.display = isClient ? 'none' : 'flex';
+  }
+
+  function addTriggerRow() {
+    const rows = document.getElementById('trigger-rows');
+    const row = document.createElement('div');
+    row.className = 'trigger-row';
+    row.innerHTML = `<select class="trigger-select"><option>Page source contains</option><option>Page source does not contain</option><option>URL matches</option><option>Cookie contains</option><option>Custom JS</option></select><input class="trigger-value" type="text" placeholder='"pageType":"product detail"'><button class="trigger-op" onclick="removeTriggerRow(this)">✕</button>`;
+    rows.appendChild(row);
+  }
+
+  function removeTriggerRow(btn) {
+    const rows = document.getElementById('trigger-rows');
+    if (rows.children.length > 1) btn.closest('.trigger-row').remove();
+  }
+
+  function copyBlock(btn, id) {
+    navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
+      btn.classList.add('copied'); btn.textContent = '✓ Copied';
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⎘ Copy'; }, 1800);
     });
   }
 
-  function applyAll() { factors.forEach(applyFactor); }
+  function handleKey(e, varId) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(varId); }
+  }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyAll);
-  } else { applyAll(); }
-
-  var obs = new MutationObserver(applyAll);
-  obs.observe(document.documentElement, { childList: true, subtree: true });
-})();`;
-
-  const jsonManifest = {
-    variation: variation.name,
-    exported_at: new Date().toISOString(),
-    page_path: pagePath,
-    factors: variation.factors.map((f) => ({
-      factor_name: f.name,
-      sitespect_type: "Client Side",
-      selector: f.selector,
-      trigger: f.trigger,
-      changes: f.changes,
-      sitespect_instructions: f.sitespect_instructions,
-    })),
-  };
-
-  return { jsSnippet, jsonManifest };
-}
-
-const makeControl = () => ({ id: "control", name: "Control", isControl: true, factors: [], messages: [] });
-const makeVariation = (n) => ({ id: uid(), name: `Variation ${n}`, isControl: false, factors: [], messages: [] });
-
-/* ─── Tiny icons ─── */
-const Icon = {
-  desktop: ({ s = 14 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>,
-  mobile: ({ s = 14 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><circle cx="12" cy="18" r="1"/></svg>,
-  close: ({ s = 12 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>,
-  plus: ({ s = 12 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
-  chevron: ({ s = 11, dir = "down" }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ transform: dir === "up" ? "rotate(180deg)" : "none", transition: "0.2s" }}><path d="M6 9l6 6 6-6"/></svg>,
-  upload: ({ s = 13 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
-  download: ({ s = 12 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>,
-  arrow: ({ s = 13 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
-  layers: ({ s = 13 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>,
-  frame: ({ s = 26 }) => <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>,
-};
-
-/* ─── DeviceToggle ─── */
-function DeviceToggle({ device, onChange }) {
-  const items = [
-    { id: "desktop", label: "Desktop", icon: <Icon.desktop /> },
-    { id: "mobile", label: "Mobile", icon: <Icon.mobile /> },
-  ];
-  return (
-    <div style={{
-      display: "flex", gap: "2px",
-      background: "var(--ink-2)",
-      borderRadius: "8px",
-      padding: "3px",
-      border: "1px solid var(--line)",
-    }}>
-      {items.map((d) => {
-        const active = device === d.id;
-        return (
-          <button key={d.id} onClick={() => onChange(d.id)} style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            padding: "5px 11px",
-            borderRadius: "6px", border: "none", cursor: "pointer",
-            fontSize: "11.5px", fontWeight: 500,
-            background: active ? "var(--ink-4)" : "transparent",
-            color: active ? "var(--text)" : "var(--text-mute)",
-            transition: "all 0.15s",
-          }}>
-            {d.icon} {d.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ─── FactorCard ─── */
-function FactorCard({ factor, onRemove }) {
-  const [open, setOpen] = useState(false);
-  const typeColor = {
-    css: "var(--mint)",
-    html: "var(--coral)",
-    js: "var(--amber)",
-    attribute: "var(--lilac)",
-  }[factor.type] || "var(--text-mute)";
-
-  const triggerLabel = { path: "Path", query: "Query", hash: "Hash", custom_js: "Custom JS" }[factor.trigger?.type] || "Path";
-
-  return (
-    <div style={{
-      background: "var(--ink-2)",
-      border: "1px solid var(--line)",
-      borderRadius: "8px",
-      overflow: "hidden",
-      marginBottom: "6px",
-    }}>
-      <div
-        onClick={() => setOpen(!open)}
-        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 11px", cursor: "pointer" }}
-      >
-        <span style={{
-          color: typeColor,
-          border: `1px solid ${typeColor}55`,
-          background: `${typeColor}12`,
-          fontSize: "9px", fontWeight: 600, letterSpacing: "0.08em",
-          padding: "2px 6px", borderRadius: "4px",
-          textTransform: "uppercase", flexShrink: 0,
-          fontFamily: "var(--font-mono)",
-        }}>{factor.type}</span>
-        <span style={{
-          flex: 1, fontSize: "12.5px", color: "var(--text)", fontWeight: 400,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>{factor.name}</span>
-        <span className="chip" style={{
-          fontSize: "9.5px", padding: "2px 6px",
-          color: "var(--text-soft)",
-          borderColor: "var(--line)",
-        }}>{triggerLabel}</span>
-        <button onClick={(e) => { e.stopPropagation(); onRemove(factor.id); }} style={{
-          background: "none", border: "none", color: "var(--text-faint)",
-          cursor: "pointer", padding: "2px", display: "flex",
-        }}>
-          <Icon.close />
-        </button>
-        <Icon.chevron dir={open ? "up" : "down"} />
-      </div>
-      {open && (
-        <div style={{ padding: "0 11px 11px", borderTop: "1px solid var(--line-soft)" }} className="fade-in">
-          <div style={{ marginTop: "10px" }}>
-            <div className="label-eyebrow" style={{ marginBottom: "4px" }}>Selector</div>
-            <code className="mono" style={{
-              fontSize: "11px", color: "var(--coral)",
-              background: "rgba(255, 107, 74, 0.08)",
-              padding: "5px 8px", borderRadius: "4px", display: "block",
-              border: "1px solid rgba(255, 107, 74, 0.15)",
-            }}>{factor.selector}</code>
-          </div>
-          <div style={{ marginTop: "9px" }}>
-            <div className="label-eyebrow" style={{ marginBottom: "4px" }}>Changes</div>
-            {factor.changes?.map((c, i) => (
-              <div key={i} style={{
-                display: "flex", gap: "8px", fontSize: "11px",
-                marginBottom: "3px", fontFamily: "var(--font-mono)",
-              }}>
-                <span style={{ color: "var(--text-soft)", minWidth: "110px", flexShrink: 0 }}>{c.property}:</span>
-                <span style={{ color: "var(--text)", wordBreak: "break-all" }}>{c.value}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: "9px" }}>
-            <div className="label-eyebrow" style={{ marginBottom: "4px" }}>
-              Trigger <span style={{ color: "var(--text-faint)" }}>→</span> {triggerLabel}
-            </div>
-            <code className="mono" style={{
-              fontSize: "11px", color: "var(--mint)",
-              background: "rgba(122, 224, 184, 0.06)",
-              padding: "5px 8px", borderRadius: "4px", display: "block",
-              marginBottom: "5px",
-              border: "1px solid rgba(122, 224, 184, 0.15)",
-            }}>{factor.trigger?.value}</code>
-            <p style={{ fontSize: "10.5px", color: "var(--text-soft)", margin: 0, lineHeight: 1.65 }}>
-              {factor.trigger?.rationale}
-            </p>
-          </div>
-          {factor.sitespect_instructions && (
-            <div style={{ marginTop: "9px" }}>
-              <div className="label-eyebrow" style={{ marginBottom: "4px" }}>SiteSpect Setup</div>
-              <p style={{
-                fontSize: "10.5px", color: "var(--text-soft)",
-                margin: 0, lineHeight: 1.65, whiteSpace: "pre-wrap",
-              }}>{factor.sitespect_instructions}</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── ExportModal ─── */
-function ExportModal({ variation, onClose }) {
-  const [tab, setTab] = useState("js");
-  const [copied, setCopied] = useState(false);
-  const { jsSnippet, jsonManifest } = generateExport(variation);
-  const content = tab === "js" ? jsSnippet : JSON.stringify(jsonManifest, null, 2);
-  const copy = () => {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  const download = () => {
-    const blob = new Blob([content], { type: tab === "js" ? "text/javascript" : "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${variation.name.replace(/\s+/g, "-").toLowerCase()}.${tab === "js" ? "js" : "json"}`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0,
-      background: "rgba(4, 5, 10, 0.75)",
-      backdropFilter: "blur(6px)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 1000, padding: "24px",
-    }}
-    onClick={onClose}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="fade-in"
-        style={{
-          background: "var(--ink-2)",
-          border: "1px solid var(--line)",
-          borderRadius: "14px",
-          width: "100%", maxWidth: "760px", maxHeight: "82vh",
-          display: "flex", flexDirection: "column",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.6)",
-        }}>
-        <div style={{
-          display: "flex", alignItems: "center",
-          padding: "15px 18px", borderBottom: "1px solid var(--line)",
-        }}>
-          <div>
-            <div className="serif" style={{ fontSize: "22px", fontWeight: 400, color: "var(--text)", lineHeight: 1, fontStyle: "italic" }}>
-              Export <span style={{ color: "var(--coral)" }}>—</span> {variation.name}
-            </div>
-            <div className="label-eyebrow" style={{ marginTop: "5px" }}>
-              {variation.factors.length} factor{variation.factors.length !== 1 ? "s" : ""} · SiteSpect Client-Side
-            </div>
-          </div>
-          <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
-            <div style={{ display: "flex", background: "var(--ink-3)", borderRadius: "7px", padding: "3px" }}>
-              {[{ id: "js", label: "JS Snippet" }, { id: "json", label: "JSON Manifest" }].map((t) => (
-                <button key={t.id} onClick={() => setTab(t.id)} style={{
-                  padding: "5px 11px", borderRadius: "5px", border: "none",
-                  background: tab === t.id ? "var(--ink-4)" : "transparent",
-                  color: tab === t.id ? "var(--text)" : "var(--text-mute)",
-                  fontSize: "11px", fontWeight: 500, cursor: "pointer",
-                }}>{t.label}</button>
-              ))}
-            </div>
-            <button className="btn btn-ghost" onClick={download} title="Download file">
-              <Icon.download s={12} />
-            </button>
-            <button className="btn btn-primary" onClick={copy} style={{ background: copied ? "var(--mint)" : "var(--coral)" }}>
-              {copied ? "✓ Copied" : "Copy"}
-            </button>
-            <button className="btn btn-ghost" onClick={onClose} style={{ width: "30px", height: "30px", padding: 0 }}>
-              <Icon.close />
-            </button>
-          </div>
-        </div>
-        {tab === "js" && (
-          <div style={{
-            padding: "10px 18px",
-            background: "rgba(255, 107, 74, 0.06)",
-            borderBottom: "1px solid rgba(255, 107, 74, 0.12)",
-          }}>
-            <p style={{ margin: 0, fontSize: "11px", color: "var(--coral-soft)", lineHeight: 1.65 }}>
-              <strong>SiteSpect setup:</strong> New A/B Campaign → Variations → Find &amp; Replace → Type: <strong>Client Side</strong> → paste into <strong>Custom JavaScript</strong>.
-            </p>
-          </div>
-        )}
-        <pre className="mono" style={{
-          flex: 1, overflow: "auto", margin: 0,
-          padding: "14px 18px",
-          fontSize: "11.5px", lineHeight: 1.75,
-          color: "#d4e6a8", background: "#070810",
-          borderRadius: "0 0 14px 14px",
-        }}>
-          {content}
-        </pre>
-      </div>
-    </div>
-  );
-}
-
-/* ─── VariationTabBar ─── */
-function VariationTabBar({ variations, activeId, onSelect, onAdd, onRename, onDelete }) {
-  const [editingId, setEditingId] = useState(null);
-  const [editVal, setEditVal] = useState("");
-
-  const startEdit = (v, e) => {
-    if (v.isControl) return;
-    e.stopPropagation();
-    setEditingId(v.id); setEditVal(v.name);
-  };
-  const commitEdit = (id) => { if (editVal.trim()) onRename(id, editVal.trim()); setEditingId(null); };
-
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: "4px",
-      padding: "9px 16px",
-      borderBottom: "1px solid var(--line)",
-      background: "var(--ink-2)",
-      overflowX: "auto", flexShrink: 0,
-    }}>
-      <span className="label-eyebrow" style={{ marginRight: "8px", flexShrink: 0, whiteSpace: "nowrap" }}>
-        Preview
-      </span>
-      {variations.map((v, idx) => {
-        const color = v.isControl ? "#6b7280" : VAR_COLORS[(idx - 1) % VAR_COLORS.length];
-        const isActive = v.id === activeId;
-        return (
-          <div
-            key={v.id}
-            onClick={() => onSelect(v.id)}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              padding: "5px 11px", borderRadius: "8px",
-              cursor: "pointer", flexShrink: 0,
-              background: isActive ? `${color}18` : "transparent",
-              border: `1px solid ${isActive ? `${color}55` : "var(--line-soft)"}`,
-              transition: "all 0.15s",
-            }}
-          >
-            <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: color, flexShrink: 0 }} />
-            {editingId === v.id ? (
-              <input
-                autoFocus value={editVal}
-                onChange={(e) => setEditVal(e.target.value)}
-                onBlur={() => commitEdit(v.id)}
-                onKeyDown={(e) => e.key === "Enter" && commitEdit(v.id)}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  background: "transparent", border: "none", outline: "none",
-                  color: "var(--text)", fontSize: "12px", fontWeight: 500, width: "90px",
-                }}
-              />
-            ) : (
-              <span
-                onDoubleClick={(e) => startEdit(v, e)}
-                title={v.isControl ? "Control — original" : "Double-click to rename"}
-                style={{
-                  fontSize: "12px", fontWeight: 500,
-                  color: isActive ? "var(--text)" : "var(--text-soft)",
-                  userSelect: "none", whiteSpace: "nowrap",
-                }}
-              >
-                {v.name}
-              </span>
-            )}
-            {v.factors.length > 0 && (
-              <span className="mono" style={{
-                fontSize: "9.5px", color,
-                background: `${color}20`, padding: "1px 5px", borderRadius: "3px",
-                fontWeight: 500,
-              }}>{v.factors.length}</span>
-            )}
-            {!v.isControl && variations.filter(x => !x.isControl).length > 1 && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(v.id); }}
-                style={{
-                  background: "none", border: "none",
-                  color: "var(--text-faint)", cursor: "pointer",
-                  padding: 0, display: "flex", lineHeight: 1,
-                }}
-              >
-                <Icon.close s={10} />
-              </button>
-            )}
-          </div>
-        );
-      })}
-      <button
-        onClick={onAdd}
-        style={{
-          display: "flex", alignItems: "center", gap: "5px",
-          padding: "5px 10px", borderRadius: "8px",
-          border: "1px dashed var(--line)", background: "transparent",
-          color: "var(--text-soft)", cursor: "pointer", fontSize: "11.5px",
-          flexShrink: 0, transition: "all 0.15s", fontFamily: "inherit",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--coral)"; e.currentTarget.style.color = "var(--coral)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.color = "var(--text-soft)"; }}
-      >
-        <Icon.plus s={11} />
-        Add variation
-      </button>
-    </div>
-  );
-}
-
-/* ─── LogoMark ─── */
-function LogoMark() {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
-      <img
-        src={LOGO_SRC}
-        alt="Etos & Gall Product"
-        style={{
-          height: "34px", width: "auto",
-          display: "block",
-          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.25))",
-        }}
-      />
-      <div style={{
-        width: "1px", height: "26px", background: "var(--line)", flexShrink: 0,
-      }} />
-      <div>
-        <div className="serif" style={{
-          fontSize: "18px", lineHeight: 1,
-          color: "var(--text)", fontStyle: "italic", fontWeight: 400,
-        }}>
-          A/B Test <span style={{ color: "var(--coral)" }}>Builder</span>
-        </div>
-        <div className="label-eyebrow" style={{ marginTop: "4px" }}>
-          SiteSpect · Client-Side Variations
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Main App ─── */
-function ABTestBuilder() {
-  const [device, setDevice] = useState("desktop");
-  const [htmlSource, setHtmlSource] = useState("");
-  const [variations, setVariations] = useState([makeControl(), makeVariation(1)]);
-  const [activeVarId, setActiveVarId] = useState("control");
-  const [promptText, setPromptText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [activeCodeTab, setActiveCodeTab] = useState("html");
-  const [showExport, setShowExport] = useState(false);
-  const [previewKey, setPreviewKey] = useState(0);
-  const fileInputRef = useRef(null);
-  const iframeRef = useRef(null);
-  const chatEndRef = useRef(null);
-
-  const activeVar = variations.find((v) => v.id === activeVarId) || variations[0];
-  const varCount = variations.filter((v) => !v.isControl).length;
-
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [activeVar.messages]);
-
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (!iframe || !htmlSource) return;
-    const inject = () => {
-      try {
-        const doc = iframe.contentDocument || iframe.contentWindow?.document;
-        if (doc) applyFactorsToDoc(doc, activeVar.factors);
-      } catch (e) {}
-    };
-    iframe.onload = inject;
-    const t = setTimeout(inject, 100);
-    return () => clearTimeout(t);
-  }, [activeVar.factors, previewKey, activeVarId, htmlSource]);
-
-  const updateVar = (id, fn) => setVariations((prev) => prev.map((v) => v.id === id ? { ...v, ...fn(v) } : v));
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setHtmlSource(ev.target.result);
-      setPreviewKey((k) => k + 1);
-      setVariations((prev) => prev.map((v) => ({
-        ...v,
-        messages: [...v.messages, { role: "system", text: `✓ Loaded "${file.name}" (${(file.size / 1024).toFixed(1)} KB)` }]
-      })));
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  };
-
-  const loadDemoPage = () => {
-    const demo = `<!DOCTYPE html><html><head><title>Etos · Skincare Sale</title>
-<style>
-  body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; color: #1a1a1a; background: #fafaf7; }
-  .hero { background: linear-gradient(135deg, #ffe0d4 0%, #ffd1dc 100%); padding: 60px 40px; text-align: center; }
-  .hero h1 { font-size: 42px; margin: 0 0 12px; font-weight: 600; }
-  .hero p { font-size: 17px; color: #555; max-width: 520px; margin: 0 auto 24px; line-height: 1.55; }
-  .cta { background: #1a1a1a; color: white; padding: 14px 32px; border: none; font-size: 15px; border-radius: 6px; cursor: pointer; font-weight: 500; }
-  .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 48px 40px; max-width: 1100px; margin: 0 auto; }
-  .product { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
-  .product h3 { margin: 0 0 6px; font-size: 17px; }
-  .product .price { color: #e04f30; font-weight: 600; font-size: 18px; }
-  .product .old-price { color: #999; text-decoration: line-through; font-size: 14px; margin-left: 8px; }
-  .badge { background: #7ae0b8; color: #0a0b10; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
-  footer { text-align: center; padding: 32px; color: #888; font-size: 13px; }
-</style></head>
-<body>
-<section class="hero">
-  <h1>Spring skincare sale</h1>
-  <p>Gentle, effective, loved by dermatologists. Shop up to 40% off our bestselling routines this week only.</p>
-  <button class="cta" id="hero-cta">Shop the sale</button>
-</section>
-<section class="products">
-  <div class="product"><span class="badge">Best seller</span><h3>Hydrating serum</h3><p>Plumps and smooths in 2 weeks.</p><div><span class="price">€18</span><span class="old-price">€30</span></div></div>
-  <div class="product"><span class="badge">New</span><h3>Vitamin C glow drops</h3><p>Brightens dull skin overnight.</p><div><span class="price">€22</span><span class="old-price">€35</span></div></div>
-  <div class="product"><span class="badge">-40%</span><h3>Overnight repair cream</h3><p>Wake up with visibly firmer skin.</p><div><span class="price">€24</span><span class="old-price">€40</span></div></div>
-</section>
-<footer>Etos · Gall &amp; Gall demo page · For prototype use only</footer>
-</body></html>`;
-    setHtmlSource(demo);
-    setPreviewKey((k) => k + 1);
-    setVariations((prev) => prev.map((v) => ({
-      ...v,
-      messages: [...v.messages, { role: "system", text: "✓ Loaded demo page — try: \"Change the hero button to coral and add a countdown timer\"" }]
-    })));
-  };
-
-  const handlePrompt = async () => {
-    if (!promptText.trim() || activeVar.isControl || !htmlSource) return;
-    const userMsg = { role: "user", text: promptText };
-    updateVar(activeVarId, (v) => ({ messages: [...v.messages, userMsg] }));
-    const currentPrompt = promptText;
-    setPromptText("");
-    setLoading(true);
-
-    const truncatedHTML = htmlSource.slice(0, 8000);
-    const history = activeVar.messages
-      .filter((m) => m.role === "user" || m.role === "assistant_raw")
-      .map((m) => ({ role: m.role === "assistant_raw" ? "assistant" : "user", content: m.text }));
-
-    try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [
-            ...history,
-            { role: "user", content: `Page HTML:\n\`\`\`html\n${truncatedHTML}\n\`\`\`\n\nRequest: ${currentPrompt}` },
-          ],
-        }),
-      });
-      const data = await res.json();
-      const raw = data.content?.map((b) => b.text || "").join("") || "";
-      let parsed;
-      try {
-        const m = raw.match(/\{[\s\S]*\}/);
-        parsed = JSON.parse(m?.[0] || raw);
-      } catch {
-        updateVar(activeVarId, (v) => ({
-          messages: [...v.messages, { role: "system", text: "⚠️ Could not parse response." }]
-        }));
-        setLoading(false);
-        return;
-      }
-
-      updateVar(activeVarId, (v) => {
-        const newFactors = parsed.factors || [];
-        const newIds = new Set(newFactors.map((f) => f.id));
-        return {
-          messages: [
-            ...v.messages,
-            { role: "assistant", text: parsed.summary || "Changes generated.", factorCount: newFactors.length },
-            { role: "assistant_raw", text: raw },
-          ],
-          factors: [...v.factors.filter((f) => !newIds.has(f.id)), ...newFactors],
-        };
-      });
-      setPreviewKey((k) => k + 1);
-    } catch (err) {
-      updateVar(activeVarId, (v) => ({
-        messages: [...v.messages, { role: "system", text: `⚠️ Error: ${err.message}` }]
-      }));
-    }
-    setLoading(false);
-  };
-
-  const addVariation = () => {
-    const n = varCount + 1;
-    const nv = makeVariation(n);
-    setVariations((prev) => [...prev, nv]);
-    setActiveVarId(nv.id);
-  };
-
-  const codeContent = (() => {
-    if (activeCodeTab === "html") return htmlSource || "<!-- No source loaded — import a page or try the demo -->";
-    if (activeCodeTab === "css") {
-      const cf = activeVar.factors.filter((f) => f.type === "css");
-      return cf.length
-        ? cf.flatMap((f) => f.changes?.map((c) => `/* ${f.name} */\n${f.selector} { ${c.property}: ${c.value}; }`)).join("\n\n")
-        : "/* No CSS changes for this variation */";
-    }
-    const jf = activeVar.factors.filter((f) => f.type !== "css");
-    return jf.length
-      ? jf.map((f) => `/* ${f.name} | ${f.selector} */\n// Trigger: ${f.trigger?.type} → ${f.trigger?.value}`).join("\n\n")
-      : "// No JS/HTML changes";
-  })();
-
-  const activeVarIdx = variations.indexOf(activeVar);
-  const activeVarColor = activeVar.isControl ? "#6b7280" : VAR_COLORS[(activeVarIdx - 1) % VAR_COLORS.length];
-  const canExport = !activeVar.isControl && activeVar.factors.length > 0;
-
-  return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      height: "100vh",
-      background: "var(--ink)",
-      color: "var(--text)",
-    }}>
-      {/* Top bar */}
-      <div style={{
-        display: "flex", alignItems: "center",
-        padding: "12px 18px",
-        borderBottom: "1px solid var(--line)",
-        background: "linear-gradient(180deg, #131520 0%, #101117 100%)",
-        flexShrink: 0, gap: "14px",
-      }}>
-        <LogoMark />
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "10px" }}>
-          <DeviceToggle device={device} onChange={setDevice} />
-          <button
-            className={canExport ? "btn btn-primary" : "btn"}
-            onClick={() => canExport && setShowExport(true)}
-            disabled={!canExport}
-          >
-            <Icon.download s={12} />
-            Export {canExport ? `(${activeVar.factors.length})` : ""}
-          </button>
-        </div>
-      </div>
-
-      {/* Main split */}
-      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-
-        {/* LEFT PANEL */}
-        <div style={{
-          width: "400px", flexShrink: 0,
-          borderRight: "1px solid var(--line)",
-          display: "flex", flexDirection: "column",
-          background: "var(--ink-2)",
-        }}>
-          {/* Import */}
-          <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--line)" }}>
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".html,.htm" style={{ display: "none" }} />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: "100%", padding: "9px 12px",
-                background: htmlSource ? "rgba(122, 224, 184, 0.06)" : "var(--ink-3)",
-                border: `1px dashed ${htmlSource ? "rgba(122, 224, 184, 0.3)" : "var(--line)"}`,
-                borderRadius: "8px",
-                color: htmlSource ? "var(--mint)" : "var(--text-soft)",
-                cursor: "pointer", fontSize: "12px",
-                display: "flex", alignItems: "center", justifyContent: "center", gap: "7px",
-                fontFamily: "inherit", transition: "all 0.15s",
-              }}
-            >
-              <Icon.upload />
-              {htmlSource ? "✓ Page loaded — import another" : "Import page source (.html)"}
-            </button>
-            {!htmlSource && (
-              <button
-                onClick={loadDemoPage}
-                style={{
-                  width: "100%", marginTop: "6px", padding: "6px",
-                  background: "transparent", border: "none",
-                  color: "var(--text-mute)", fontSize: "11px",
-                  cursor: "pointer", fontFamily: "inherit",
-                  textDecoration: "underline", textUnderlineOffset: "3px",
-                  textDecorationColor: "var(--line)",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--coral)"; e.currentTarget.style.textDecorationColor = "var(--coral)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-mute)"; e.currentTarget.style.textDecorationColor = "var(--line)"; }}
-              >
-                or try the demo page
-              </button>
-            )}
-          </div>
-
-          {/* Active variation indicator */}
-          <div style={{
-            padding: "9px 14px",
-            borderBottom: "1px solid var(--line)",
-            display: "flex", alignItems: "center", gap: "8px",
-            background: "var(--ink)",
-          }}>
-            <div style={{
-              width: "8px", height: "8px", borderRadius: "50%",
-              background: activeVarColor, flexShrink: 0,
-              boxShadow: `0 0 0 3px ${activeVarColor}22`,
-            }} />
-            <span style={{ fontSize: "12px", fontWeight: 500, color: "var(--text)" }}>{activeVar.name}</span>
-            {activeVar.isControl
-              ? <span style={{ fontSize: "11px", color: "var(--text-mute)" }}>— original page, no changes</span>
-              : <span style={{ fontSize: "11px", color: "var(--text-soft)" }}>
-                  — {activeVar.factors.length} factor{activeVar.factors.length !== 1 ? "s" : ""}
-                </span>
-            }
-          </div>
-
-          {/* Chat */}
-          <div style={{
-            flex: 1, overflowY: "auto",
-            padding: "14px",
-            display: "flex", flexDirection: "column", gap: "8px",
-          }}>
-            {activeVar.messages.filter((m) => m.role !== "assistant_raw").length === 0 && (
-              <div style={{ textAlign: "center", padding: "36px 18px" }}>
-                <div className="serif" style={{
-                  fontSize: "28px", fontStyle: "italic",
-                  color: "var(--text-soft)", marginBottom: "10px",
-                  lineHeight: 1.1,
-                }}>
-                  {activeVar.isControl ? "The original" : "What shall we test?"}
-                </div>
-                <div style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.8 }}>
-                  {activeVar.isControl
-                    ? <>This is the control page.<br />Switch to a variation tab to describe changes.</>
-                    : <>Describe a design change in plain English.<br />Each request becomes one or more SiteSpect factors.</>
-                  }
-                </div>
-                {!activeVar.isControl && htmlSource && (
-                  <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "5px" }}>
-                    {[
-                      "Make the hero CTA coral and larger",
-                      "Add urgency banner above the fold",
-                      "Change product prices to bold red",
-                    ].map((ex, i) => (
-                      <button key={i} onClick={() => setPromptText(ex)} style={{
-                        background: "var(--ink-3)",
-                        border: "1px solid var(--line)",
-                        borderRadius: "6px",
-                        padding: "6px 10px",
-                        fontSize: "11px",
-                        color: "var(--text-soft)",
-                        cursor: "pointer",
-                        textAlign: "left",
-                        fontFamily: "inherit",
-                      }}>
-                        <span style={{ color: "var(--coral)", marginRight: "5px" }}>→</span>
-                        {ex}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {activeVar.messages.filter((m) => m.role !== "assistant_raw").map((msg, i) => (
-              <div key={i} className="fade-in" style={{ display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start" }}>
-                <div style={{
-                  maxWidth: "88%",
-                  padding: "9px 12px", borderRadius: "10px",
-                  fontSize: "12.5px", lineHeight: 1.55,
-                  background:
-                    msg.role === "user" ? "var(--coral)"
-                    : msg.role === "system" ? "var(--ink-3)"
-                    : "var(--ink-3)",
-                  color:
-                    msg.role === "user" ? "#1a0a05"
-                    : msg.role === "system" ? "var(--text-soft)"
-                    : "var(--text)",
-                  border: msg.role === "assistant" ? "1px solid var(--line)" : "none",
-                  fontWeight: msg.role === "user" ? 500 : 400,
-                }}>
-                  {msg.text}
-                  {msg.role === "assistant" && msg.factorCount > 0 && (
-                    <div style={{
-                      marginTop: "5px", paddingTop: "5px",
-                      borderTop: "1px solid var(--line)",
-                      fontSize: "10.5px", color: "var(--coral)", fontWeight: 500,
-                    }}>
-                      ↓ {msg.factorCount} factor{msg.factorCount !== 1 ? "s" : ""} added
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div style={{ display: "flex" }}>
-                <div className="loading-dot" style={{
-                  padding: "9px 12px", borderRadius: "10px",
-                  background: "var(--ink-3)", border: "1px solid var(--line)",
-                  fontSize: "12px", color: "var(--text-soft)",
-                }}>Analyzing the page<span style={{ color: "var(--coral)" }}>…</span></div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Factors */}
-          {activeVar.factors.length > 0 && (
-            <div style={{
-              padding: "11px 14px", borderTop: "1px solid var(--line)",
-              maxHeight: "260px", overflowY: "auto",
-            }}>
-              <div className="label-eyebrow" style={{ marginBottom: "8px" }}>
-                SiteSpect Factors <span style={{ color: "var(--coral)" }}>· {activeVar.factors.length}</span>
-              </div>
-              {activeVar.factors.map((f) => (
-                <FactorCard
-                  key={f.id}
-                  factor={f}
-                  onRemove={(id) => updateVar(activeVarId, (v) => ({ factors: v.factors.filter((x) => x.id !== id) }))}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Prompt input */}
-          <div style={{ padding: "12px 14px", borderTop: "1px solid var(--line)", background: "var(--ink)" }}>
-            <div className="label-eyebrow" style={{ marginBottom: "7px" }}>Design Change Prompt</div>
-            <textarea
-              value={promptText}
-              onChange={(e) => setPromptText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handlePrompt(); }}
-              disabled={activeVar.isControl}
-              placeholder={activeVar.isControl ? "Select a variation tab to prompt changes…" : "e.g., Make the CTA button coral and larger, add a countdown timer…"}
-              style={{
-                width: "100%", minHeight: "74px",
-                background: "var(--ink-2)",
-                border: "1px solid var(--line)", borderRadius: "8px",
-                color: activeVar.isControl ? "var(--text-faint)" : "var(--text)",
-                fontSize: "12.5px", padding: "10px 12px",
-                resize: "vertical", outline: "none", boxSizing: "border-box",
-                lineHeight: 1.6,
-                cursor: activeVar.isControl ? "not-allowed" : "text",
-                transition: "border-color 0.15s, box-shadow 0.15s",
-              }}
-            />
-            <button
-              className="btn btn-primary"
-              onClick={handlePrompt}
-              disabled={loading || !promptText.trim() || activeVar.isControl}
-              style={{ width: "100%", marginTop: "7px", padding: "10px", fontSize: "13px" }}
-            >
-              <Icon.arrow />
-              {loading ? "Applying…" : "Apply changes"}
-            </button>
-            <div className="mono" style={{
-              fontSize: "10px", color: "var(--text-faint)", textAlign: "center",
-              marginTop: "5px", letterSpacing: "0.05em",
-            }}>⌘ + Enter to submit</div>
-          </div>
-        </div>
-
-        {/* RIGHT PANEL */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-
-          {/* Variation tab bar */}
-          <VariationTabBar
-            variations={variations}
-            activeId={activeVarId}
-            onSelect={(id) => { setActiveVarId(id); setPreviewKey((k) => k + 1); }}
-            onAdd={addVariation}
-            onRename={(id, name) => setVariations((prev) => prev.map((v) => v.id === id ? { ...v, name } : v))}
-            onDelete={(id) => { setVariations((prev) => prev.filter((v) => v.id !== id)); if (activeVarId === id) setActiveVarId("control"); }}
-          />
-
-          {/* Preview */}
-          <div style={{
-            flex: 1,
-            background: "radial-gradient(ellipse at top, #131520 0%, #07080c 80%)",
-            display: "flex", alignItems: "flex-start", justifyContent: "center",
-            overflow: "auto", padding: "22px",
-          }}>
-            {htmlSource ? (
-              <div style={{
-                width: device === "mobile" ? "375px" : "100%",
-                maxWidth: device === "mobile" ? "375px" : "1000px",
-                minHeight: "100%",
-                boxShadow: `
-                  0 0 0 1px ${activeVarColor}44,
-                  0 24px 64px rgba(0, 0, 0, 0.55),
-                  0 0 80px ${activeVarColor}15
-                `,
-                borderRadius: device === "mobile" ? "20px" : "10px",
-                overflow: "hidden",
-                transition: "width 0.3s ease, max-width 0.3s ease",
-                background: "#fff",
-              }}>
-                {/* Variation badge */}
-                <div style={{
-                  background: activeVar.isControl
-                    ? "linear-gradient(90deg, #1f2937, #374151)"
-                    : `linear-gradient(90deg, ${activeVarColor}, ${activeVarColor}cc)`,
-                  color: "#fff", fontSize: "10px", fontWeight: 600, letterSpacing: "0.1em",
-                  padding: "6px 12px", display: "flex", alignItems: "center", gap: "7px",
-                  textTransform: "uppercase",
-                }}>
-                  <div style={{
-                    width: "6px", height: "6px", borderRadius: "50%",
-                    background: "rgba(255,255,255,0.85)",
-                  }} />
-                  {activeVar.name}
-                  <span style={{ opacity: 0.75, marginLeft: "4px" }}>
-                    {activeVar.isControl
-                      ? "— original (no changes)"
-                      : `— ${activeVar.factors.length} factor${activeVar.factors.length !== 1 ? "s" : ""} applied`
-                    }
-                  </span>
-                </div>
-                <iframe
-                  key={`${previewKey}-${activeVarId}`}
-                  ref={iframeRef}
-                  srcDoc={htmlSource}
-                  style={{
-                    width: "100%",
-                    height: device === "mobile" ? "640px" : "600px",
-                    border: "none", display: "block",
-                  }}
-                  title="Page Preview"
-                  sandbox="allow-scripts allow-same-origin"
-                />
-              </div>
-            ) : (
-              <div style={{
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                height: "100%", gap: "16px", textAlign: "center",
-              }}>
-                <div style={{
-                  width: "72px", height: "72px",
-                  border: "1px dashed var(--line)", borderRadius: "14px",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "var(--text-faint)",
-                }}>
-                  <Icon.frame s={28} />
-                </div>
-                <div>
-                  <div className="serif" style={{
-                    fontSize: "24px", fontStyle: "italic",
-                    color: "var(--text-soft)", marginBottom: "6px",
-                  }}>
-                    Import a page to begin
-                  </div>
-                  <div style={{ fontSize: "12px", color: "var(--text-mute)", lineHeight: 1.8 }}>
-                    Upload any <code className="mono" style={{ color: "var(--coral)" }}>.html</code> file — or try the demo page.
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Code viewer */}
-          <div style={{ borderTop: "1px solid var(--line)", flexShrink: 0, background: "var(--ink-2)" }}>
-            <div style={{ display: "flex", borderBottom: "1px solid var(--line)" }}>
-              {[
-                { id: "html", label: "HTML", count: null },
-                { id: "css", label: "CSS", count: activeVar.factors.filter((f) => f.type === "css").length },
-                { id: "js", label: "JS / HTML", count: activeVar.factors.filter((f) => f.type !== "css").length },
-              ].map((t) => {
-                const active = activeCodeTab === t.id;
-                return (
-                  <button key={t.id} onClick={() => setActiveCodeTab(t.id)} style={{
-                    padding: "9px 18px", border: "none", cursor: "pointer",
-                    background: active ? "var(--ink)" : "transparent",
-                    color: active ? "var(--coral)" : "var(--text-mute)",
-                    fontSize: "11px", fontWeight: 500,
-                    borderBottom: active ? "2px solid var(--coral)" : "2px solid transparent",
-                    marginBottom: "-1px",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    fontFamily: "var(--font-mono)", letterSpacing: "0.03em",
-                  }}>
-                    {t.label}
-                    {t.count > 0 && (
-                      <span style={{
-                        background: active ? "var(--coral)" : "var(--ink-4)",
-                        color: active ? "#1a0a05" : "var(--text-mute)",
-                        fontSize: "9px", padding: "1px 5px", borderRadius: "3px",
-                        fontWeight: 600,
-                      }}>{t.count}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <pre className="mono" style={{
-              margin: 0, padding: "12px 16px",
-              background: "var(--ink)",
-              color: "var(--text-soft)",
-              fontSize: "11px", lineHeight: 1.75,
-              height: "140px", overflow: "auto",
-              whiteSpace: "pre-wrap", wordBreak: "break-word",
-            }}>
-              {codeContent}
-            </pre>
-          </div>
-        </div>
-      </div>
-
-      {showExport && <ExportModal variation={activeVar} onClose={() => setShowExport(false)} />}
-    </div>
-  );
-}
-
-/* ─── Mount ─── */
-const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<ABTestBuilder />);
+  function autoResize(el) {
+    el.style.height = '';
+    el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+  }
 </script>
-
 </body>
 </html>
