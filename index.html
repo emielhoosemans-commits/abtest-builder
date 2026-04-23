@@ -542,6 +542,130 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── INSPECT MODE ── */
+  .inspect-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 3px 9px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .inspect-btn:hover { color: var(--blue); border-color: rgba(37,99,235,0.35); background: rgba(37,99,235,0.07); }
+  .inspect-btn.active {
+    color: var(--blue);
+    background: rgba(37,99,235,0.1);
+    border-color: rgba(37,99,235,0.4);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
+  }
+  [data-theme="dark"] .inspect-btn.active {
+    color: var(--blue);
+    background: rgba(96,165,250,0.12);
+    border-color: rgba(96,165,250,0.4);
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.1);
+  }
+  .inspect-btn .inspect-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: none;
+  }
+  .inspect-btn.active .inspect-dot {
+    animation: inspectPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes inspectPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* Cursor change when inspect active */
+  .wireframe.inspect-active { cursor: crosshair; }
+
+  /* Hoverable wireframe elements */
+  .wf-selectable {
+    position: relative;
+    transition: outline 0.08s;
+  }
+  .wireframe.inspect-active .wf-selectable:hover {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+    border-radius: 3px;
+  }
+  .wireframe.inspect-active .wf-selectable:hover::after {
+    content: attr(data-label);
+    position: absolute;
+    top: -26px;
+    left: 0;
+    background: var(--blue);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    letter-spacing: 0.03em;
+  }
+  /* Pinned / selected element */
+  .wf-selectable.pinned {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 1px;
+    border-radius: 3px;
+  }
+  .wf-selectable.pinned::after {
+    content: attr(data-label) ' ✓' !important;
+    background: var(--accent) !important;
+    top: -26px;
+    left: 0;
+    position: absolute;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    letter-spacing: 0.03em;
+    display: block;
+  }
+
+  /* System message style in chat */
+  .msg.system .msg-bubble {
+    background: rgba(37,99,235,0.07);
+    border: 1px solid rgba(37,99,235,0.2);
+    color: var(--blue);
+    font-family: var(--mono);
+    font-size: 11px;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  [data-theme="dark"] .msg.system .msg-bubble {
+    background: rgba(96,165,250,0.08);
+    border-color: rgba(96,165,250,0.2);
+    color: var(--blue);
+  }
+  .msg.system { justify-content: flex-start; }
+  .msg.system .msg-avatar { background: rgba(37,99,235,0.1); color: var(--blue); border-color: rgba(37,99,235,0.25); font-size: 9px; }
+  [data-theme="dark"] .msg.system .msg-avatar { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.2); }
 </style>
 </head>
 <body>
@@ -656,6 +780,9 @@
             <input class="url-input" id="previewUrl" type="text" placeholder="https://www.gall.nl/" oninput="syncUrlBar()">
             <button class="url-go-btn" onclick="syncUrlBar()" title="Update">↵</button>
           </div>
+          <button class="inspect-btn" id="inspectBtn" onclick="toggleInspect()" title="Click elements in the wireframe to select them">
+            <span class="inspect-dot"></span> Inspect
+          </button>
           <div class="device-btns">
             <button class="device-btn active" onclick="setDevice('desktop',this)">Desktop</button>
             <button class="device-btn" onclick="setDevice('mobile',this)">Mobile</button>
@@ -671,57 +798,64 @@
 
             <!-- Desktop -->
             <div class="wf-body" id="wf-desktop">
-              <div class="wf-nav">
-                <div class="wf-nav-logo"></div>
+              <div class="wf-nav wf-selectable" data-selector=".c-header.js-header" data-label=".c-header.js-header">
+                <div class="wf-nav-logo wf-selectable" data-selector=".c-header__logo" data-label=".c-header__logo"></div>
                 <div class="wf-nav-links">
-                  <div class="wf-nav-link"></div><div class="wf-nav-link"></div>
-                  <div class="wf-nav-link"></div><div class="wf-nav-link"></div><div class="wf-nav-link"></div>
+                  <div class="wf-nav-link wf-selectable" data-selector=".nav-item" data-label=".nav-item"></div>
+                  <div class="wf-nav-link wf-selectable" data-selector=".nav-item" data-label=".nav-item"></div>
+                  <div class="wf-nav-link wf-selectable" data-selector=".nav-item" data-label=".nav-item"></div>
+                  <div class="wf-nav-link wf-selectable" data-selector=".nav-item" data-label=".nav-item"></div>
+                  <div class="wf-nav-link wf-selectable" data-selector=".nav-item" data-label=".nav-item"></div>
                 </div>
-                <div class="wf-nav-search"></div>
+                <div class="wf-nav-search wf-selectable" data-selector=".c-search__input" data-label=".c-search__input"></div>
               </div>
-              <div class="wf-hero">
-                <div class="wf-hero-title"></div>
-                <div class="wf-hero-sub"></div>
-                <div class="wf-hero-cta"></div>
+              <div class="wf-hero wf-selectable" data-selector=".c-hero.js-hero" data-label=".c-hero.js-hero">
+                <div class="wf-hero-title wf-selectable" data-selector=".c-hero__title" data-label=".c-hero__title"></div>
+                <div class="wf-hero-sub wf-selectable" data-selector=".c-hero__subtitle" data-label=".c-hero__subtitle"></div>
+                <div class="wf-hero-cta wf-selectable" data-selector=".c-hero__cta.js-hero-cta" data-label=".c-hero__cta.js-hero-cta"></div>
               </div>
-              <div class="wf-grid">
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
-                <div class="wf-card"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+              <div class="wf-grid wf-selectable" data-selector=".c-product-grid" data-label=".c-product-grid">
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img wf-selectable" data-selector=".c-product-tile__image" data-label=".c-product-tile__image"></div><div class="wf-line wf-selectable" data-selector=".c-product-tile__name" data-label=".c-product-tile__name"></div><div class="wf-line s"></div><div class="wf-line price wf-selectable" data-selector=".c-product-tile__price" data-label=".c-product-tile__price"></div><div class="wf-btn-sm wf-selectable" data-selector=".c-product-tile__add-to-cart" data-label=".c-product-tile__add-to-cart"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div><div class="wf-btn-sm"></div></div>
               </div>
-              <div class="wf-footer">
-                <div class="wf-footer-link"></div><div class="wf-footer-link"></div>
-                <div class="wf-footer-link"></div><div class="wf-footer-link"></div>
+              <div class="wf-footer wf-selectable" data-selector=".c-footer.js-footer" data-label=".c-footer.js-footer">
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
               </div>
             </div>
 
             <!-- Mobile (hidden) -->
             <div class="wf-body" id="wf-mobile" style="display:none;">
-              <div class="wf-mobile-nav">
-                <div class="wf-hamburger"><span></span><span></span><span></span></div>
-                <div class="wf-mobile-logo"></div>
-                <div class="wf-mobile-cart"></div>
+              <div class="wf-mobile-nav wf-selectable" data-selector=".c-header.js-header" data-label=".c-header.js-header">
+                <div class="wf-hamburger wf-selectable" data-selector=".c-header__hamburger.js-nav-toggle" data-label=".c-header__hamburger"><span></span><span></span><span></span></div>
+                <div class="wf-mobile-logo wf-selectable" data-selector=".c-header__logo" data-label=".c-header__logo"></div>
+                <div class="wf-mobile-cart wf-selectable" data-selector=".c-minicart.js-minicart" data-label=".c-minicart.js-minicart"></div>
               </div>
-              <div class="wf-search-bar">
+              <div class="wf-search-bar wf-selectable" data-selector=".c-search-bar.js-search-bar" data-label=".c-search-bar.js-search-bar">
                 <div class="wf-search-icon"></div>
                 <div class="wf-search-text"></div>
               </div>
-              <div class="wf-mobile-hero">
-                <div class="wf-hero-title"></div>
-                <div class="wf-hero-sub"></div>
-                <div class="wf-hero-cta"></div>
+              <div class="wf-mobile-hero wf-selectable" data-selector=".c-hero.js-hero" data-label=".c-hero.js-hero">
+                <div class="wf-hero-title wf-selectable" data-selector=".c-hero__title" data-label=".c-hero__title"></div>
+                <div class="wf-hero-sub wf-selectable" data-selector=".c-hero__subtitle" data-label=".c-hero__subtitle"></div>
+                <div class="wf-hero-cta wf-selectable" data-selector=".c-hero__cta.js-hero-cta" data-label=".c-hero__cta.js-hero-cta"></div>
               </div>
-              <div class="wf-grid cols2">
-                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
-                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
-                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
-                <div class="wf-card"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+              <div class="wf-grid cols2 wf-selectable" data-selector=".c-product-grid" data-label=".c-product-grid">
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img tall wf-selectable" data-selector=".c-product-tile__image" data-label=".c-product-tile__image"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price wf-selectable" data-selector=".c-product-tile__price" data-label=".c-product-tile__price"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
+                <div class="wf-card wf-selectable" data-selector=".c-product-tile" data-label=".c-product-tile"><div class="wf-img tall"></div><div class="wf-line"></div><div class="wf-line s"></div><div class="wf-line price"></div></div>
               </div>
-              <div class="wf-footer">
-                <div class="wf-footer-link"></div><div class="wf-footer-link"></div><div class="wf-footer-link"></div>
+              <div class="wf-footer wf-selectable" data-selector=".c-footer.js-footer" data-label=".c-footer.js-footer">
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
+                <div class="wf-footer-link wf-selectable" data-selector=".c-footer__link" data-label=".c-footer__link"></div>
               </div>
             </div>
           </div>
@@ -966,9 +1100,90 @@
     });
   }
 
-  function handleKey(e, varId) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(varId); }
+  // ── Inspect mode ──
+  let inspectActive = false;
+  let pinnedEl = null;
+
+  function toggleInspect() {
+    inspectActive = !inspectActive;
+    const btn = document.getElementById('inspectBtn');
+    const wf  = document.querySelector('.wireframe');
+    btn.classList.toggle('active', inspectActive);
+    wf.classList.toggle('inspect-active', inspectActive);
+    // Clear pin when turning off
+    if (!inspectActive && pinnedEl) {
+      pinnedEl.classList.remove('pinned');
+      pinnedEl = null;
+    }
   }
+
+  // Wire up all selectable wireframe elements
+  document.querySelectorAll('.wf-selectable').forEach(el => {
+    el.addEventListener('click', e => {
+      if (!inspectActive) return;
+      e.stopPropagation();
+
+      const selector = el.dataset.selector;
+      if (!selector) return;
+
+      // Unpin previous
+      if (pinnedEl) pinnedEl.classList.remove('pinned');
+      pinnedEl = el;
+      el.classList.add('pinned');
+
+      // Populate JS selector field
+      const jsSelInput = document.getElementById('js-selector');
+      if (jsSelInput) jsSelInput.value = selector;
+
+      // Switch JS type to client side so selector is visible
+      const jsType = document.getElementById('js-type');
+      if (jsType) { jsType.value = 'client'; updateJsConfig(); }
+
+      // Populate CSS selector field too
+      const cssSelInput = document.getElementById('css-selector');
+      if (cssSelInput) cssSelInput.value = selector;
+
+      // Add trigger row with the selector
+      const triggerInput = document.querySelector('.trigger-value');
+      if (triggerInput && !triggerInput.value) triggerInput.value = `"pageType":"home"`;
+
+      // Append system message to active chat tab
+      const activePane = document.querySelector('.tab-pane.active');
+      const varId = activePane?.id?.replace('pane-', '');
+      if (varId && varId !== 'control') {
+        appendSystemMsg(varId, selector);
+      }
+
+      // Auto-exit inspect after selection
+      inspectActive = false;
+      document.getElementById('inspectBtn').classList.remove('active');
+      document.querySelector('.wireframe').classList.remove('inspect-active');
+    });
+  });
+
+  function appendSystemMsg(varId, selector) {
+    const chat = document.getElementById(`chat-${varId}`);
+    if (!chat) return;
+    chat.querySelector('.chat-welcome')?.remove();
+
+    const div = document.createElement('div');
+    div.className = 'msg system';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar';
+    avatar.textContent = '⌖';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.innerHTML = `<span style="opacity:0.6;margin-right:4px;">Element selected →</span><strong>${selector}</strong>`;
+
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+
 
   function autoResize(el) {
     el.style.height = '';
